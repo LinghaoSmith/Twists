@@ -2,394 +2,344 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>MTG Image Picker</title>
+  <title>Random Image Picker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root {
-      color-scheme: dark;
-      --bg-panel: rgba(10, 10, 16, 0.97);
-      --accent: #4fd1c5;
-      --accent-soft: rgba(79, 209, 197, 0.15);
-      --text: #f9fafb;
-      --muted: #9ca3af;
-      --border: #374151;
-    }
 
+  <style>
     * {
       box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
     }
 
-    html,
     body {
       margin: 0;
-      padding: 0;
-      height: 100%;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-        sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #000;
-      color: var(--text);
-      overflow: hidden;
+      color: #fff;
     }
 
-    img {
-      max-width: 100%;
-      display: block;
-    }
-
-    #app {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
+    .app {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
       background: #000;
     }
 
-    /* Full-screen selected image */
-    #fullImage {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      background: #000;
-      z-index: 0;
-      transition: opacity 0.25s ease;
+    /* Top bar */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0.75rem;
+      background: #111;
+      border-bottom: 1px solid #222;
+      flex-shrink: 0;
     }
 
-    /* Dark gradient overlay to keep menu readable */
-    #imageOverlayTint {
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(
-          circle at top,
-          rgba(0, 0, 0, 0.6),
-          transparent 55%
-        ),
-        linear-gradient(
-          to bottom right,
-          rgba(0, 0, 0, 0.5),
-          rgba(0, 0, 0, 0.2),
-          rgba(0, 0, 0, 0.6)
-        );
-      pointer-events: none;
-      z-index: 1;
+    .top-bar-title {
+      font-size: 1rem;
+      font-weight: 600;
+      text-align: center;
+      flex: 1;
     }
 
-    /* Menu toggle button (hamburger) */
-    #menuToggle {
-      position: fixed;
-      top: 0.75rem;
-      left: 0.75rem;
-      z-index: 4;
+    .top-bar button {
+      background: #222;
+      color: #fff;
       border: none;
+      padding: 0.45rem 0.75rem;
       border-radius: 999px;
-      padding: 0.55rem 0.9rem;
-      font-size: 1.25rem;
-      line-height: 1;
-      color: #f9fafb;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(10px);
-      cursor: pointer;
+      font-size: 0.9rem;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+      gap: 0.25rem;
+      cursor: pointer;
+      min-width: 2.25rem;
+      transition: background 0.15s ease, transform 0.1s ease;
+      touch-action: manipulation;
     }
 
-    #menuToggle:active {
-      transform: scale(0.95);
+    .top-bar button:active {
+      transform: scale(0.96);
+      background: #333;
     }
 
-    /* Slide-out panel */
-    #sidePanel {
+    .menu-button {
+      margin-right: 0.5rem;
+    }
+
+    .menu-icon {
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    .reroll-button {
+      margin-left: 0.5rem;
+      white-space: nowrap;
+    }
+
+    @media (min-width: 640px) {
+      .top-bar-title {
+        font-size: 1.1rem;
+      }
+    }
+
+    /* Main content */
+    main {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      background: #000;
+    }
+
+    /* Choice view (two random images) */
+    .choice-view {
+      height: calc(100vh - 3rem);
+      padding: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .choice-instructions {
+      text-align: center;
+      font-size: 0.9rem;
+      opacity: 0.9;
+      flex-shrink: 0;
+    }
+
+    .choice-images {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    @media (min-width: 640px) {
+      .choice-images {
+        flex-direction: row;
+      }
+    }
+
+    .choice-card {
+      flex: 1;
+      border: none;
+      background: #111;
+      border-radius: 0.75rem;
+      overflow: hidden;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .choice-card::after {
+      content: "Tap to choose";
+      position: absolute;
+      bottom: 0.4rem;
+      right: 0.6rem;
+      font-size: 0.7rem;
+      background: rgba(0, 0, 0, 0.65);
+      padding: 0.2rem 0.45rem;
+      border-radius: 999px;
+    }
+
+    .choice-card img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .choice-card:active {
+      filter: brightness(0.9);
+      transform: scale(0.98);
+      transition: transform 0.05s ease;
+    }
+
+    /* Single selected image view */
+    .single-view {
+      height: calc(100vh - 3rem);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.25rem;
+      background: #000;
+    }
+
+    .single-view img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* Hide utility */
+    .hidden {
+      display: none !important;
+    }
+
+    /* Side menu (gallery) */
+    .side-menu {
       position: fixed;
       top: 0;
       right: 0;
-      bottom: 0;
-      width: 82vw;
-      max-width: 430px;
-      background: var(--bg-panel);
-      color: var(--text);
-      z-index: 3;
+      height: 100vh;
+      width: 80vw;
+      max-width: 420px;
+      background: #111;
+      color: #fff;
+      box-shadow: -4px 0 12px rgba(0, 0, 0, 0.6);
       transform: translateX(100%);
-      transition: transform 0.25s ease-out;
+      transition: transform 0.22s ease-out;
+      z-index: 30;
       display: flex;
       flex-direction: column;
-      box-shadow: -12px 0 40px rgba(0, 0, 0, 0.7);
     }
 
-    #sidePanel.open {
-      transform: translateX(0%);
+    .side-menu.open {
+      transform: translateX(0);
     }
 
-    #panelHeader {
-      padding: 1rem 1.1rem 0.25rem;
+    .side-menu-header {
       display: flex;
+      align-items: center;
       justify-content: space-between;
-      align-items: center;
-      gap: 0.75rem;
+      padding: 0.75rem 0.75rem 0.5rem;
+      border-bottom: 1px solid #222;
+      flex-shrink: 0;
     }
 
-    #panelHeader h1 {
-      font-size: 1.05rem;
+    .side-menu-title {
+      font-size: 0.95rem;
       font-weight: 600;
-      margin: 0;
     }
 
-    #panelHeader small {
-      display: block;
-      color: var(--muted);
-      font-size: 0.7rem;
-      margin-top: 0.1rem;
-    }
-
-    #closePanel {
-      border: none;
+    .close-menu-button {
+      background: #222;
       border-radius: 999px;
-      background: rgba(15, 23, 42, 0.85);
-      color: var(--muted);
-      font-size: 1.1rem;
-      width: 32px;
-      height: 32px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+      border: none;
+      color: #fff;
+      padding: 0.35rem 0.6rem;
       cursor: pointer;
+      font-size: 0.85rem;
     }
 
-    #panelBody {
-      padding: 0.75rem 1.1rem 1.1rem;
+    .gallery {
+      padding: 0.5rem;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      scrollbar-width: thin;
-      scrollbar-color: #4b5563 transparent;
-    }
-
-    #panelBody::-webkit-scrollbar {
-      width: 6px;
-    }
-    #panelBody::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    #panelBody::-webkit-scrollbar-thumb {
-      background: #4b5563;
-      border-radius: 999px;
-    }
-
-    /* Random choice section */
-    .sectionTitle {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-      margin: 0.4rem 0 0.35rem;
-    }
-
-    #randomArea {
-      margin-bottom: 0.65rem;
-      padding: 0.6rem;
-      border-radius: 1rem;
-      background: radial-gradient(
-          circle at top left,
-          rgba(79, 209, 197, 0.2),
-          transparent 55%
-        ),
-        rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(148, 163, 184, 0.2);
-    }
-
-    #randomChoices {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .choiceCard {
-      flex: 1 1 0;
-      border-radius: 0.9rem;
-      overflow: hidden;
-      position: relative;
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      background: #020617;
-      cursor: pointer;
-      touch-action: manipulation;
-    }
-
-    .choiceCard img {
-      width: 100%;
-      height: 130px;
-      object-fit: cover;
-      display: block;
-    }
-
-    .choiceLabel {
-      position: absolute;
-      bottom: 0.3rem;
-      left: 0.4rem;
-      padding: 0.2rem 0.45rem;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.9);
-      color: var(--muted);
-      font-size: 0.65rem;
-    }
-
-    #rerollBtn {
-      width: 100%;
-      border-radius: 999px;
-      border: none;
-      padding: 0.55rem;
-      font-size: 0.85rem;
-      font-weight: 500;
-      background: var(--accent-soft);
-      color: var(--accent);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.35rem;
-    }
-
-    #rerollBtn span {
-      font-size: 1rem;
-    }
-
-    #rerollBtn:active {
-      transform: scale(0.97);
-    }
-
-    /* All images grid */
-    #thumbGrid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-      gap: 0.4rem;
-      margin-top: 0.35rem;
-      padding-bottom: 0.5rem;
+      gap: 0.5rem;
     }
 
-    .thumb {
-      position: relative;
-      border-radius: 0.75rem;
+    .gallery-item {
+      border-radius: 0.5rem;
       overflow: hidden;
-      border: 1px solid rgba(75, 85, 99, 0.85);
+      background: #000;
+      border: 1px solid #222;
+      padding: 0;
       cursor: pointer;
-      background: #020617;
-      touch-action: manipulation;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .thumb img {
-      width: 100%;
-      height: 90px;
-      object-fit: cover;
+    .gallery-item img {
       display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
-    .thumb::after {
-      content: "";
-      position: absolute;
+    .gallery-item:active {
+      transform: scale(0.96);
+      filter: brightness(0.9);
+      transition: transform 0.06s ease;
+    }
+
+    /* Backdrop */
+    .backdrop {
+      position: fixed;
       inset: 0;
-      background: radial-gradient(
-        circle at center,
-        transparent 25%,
-        rgba(15, 23, 42, 0.7)
-      );
+      background: rgba(0, 0, 0, 0.5);
       opacity: 0;
-      transition: opacity 0.15s ease;
+      pointer-events: none;
+      transition: opacity 0.22s ease-out;
+      z-index: 20;
     }
 
-    .thumb.selected::after {
+    .backdrop.visible {
       opacity: 1;
+      pointer-events: auto;
     }
 
-    .thumb.selected {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(79, 209, 197, 0.5);
+    /* Scrollbar tweaks */
+    .gallery::-webkit-scrollbar {
+      width: 6px;
     }
-
-    .thumbIndex {
-      position: absolute;
-      bottom: 0.2rem;
-      right: 0.25rem;
-      font-size: 0.65rem;
-      padding: 0.1rem 0.35rem;
+    .gallery::-webkit-scrollbar-thumb {
+      background: #333;
       border-radius: 999px;
-      background: rgba(15, 23, 42, 0.85);
-      color: var(--muted);
-    }
-
-    /* Small helper text */
-    .hint {
-      font-size: 0.7rem;
-      color: var(--muted);
-      margin-top: 0.25rem;
-      line-height: 1.4;
-    }
-
-    @media (min-width: 768px) {
-      #panelHeader h1 {
-        font-size: 1.1rem;
-      }
-
-      #randomArea {
-        padding: 0.8rem;
-      }
-
-      .choiceCard img {
-        height: 150px;
-      }
-
-      .thumb img {
-        height: 100px;
-      }
     }
   </style>
 </head>
 <body>
-  <div id="app">
-    <img id="fullImage" alt="Selected background" src="" />
-    <div id="imageOverlayTint"></div>
+  <div class="app">
+    <header class="top-bar">
+      <button id="menuToggle" class="menu-button" aria-label="Toggle menu">
+        <span class="menu-icon">☰</span>
+      </button>
 
-    <button id="menuToggle" aria-label="Open image menu" aria-expanded="false">
-      ☰
-    </button>
+      <div class="top-bar-title">
+        Random Image Picker
+      </div>
 
-    <aside id="sidePanel" aria-hidden="true">
-      <header id="panelHeader">
-        <div>
-          <h1>Pick your card art</h1>
-          <small>Tap any image to set it as the full-screen background.</small>
+      <button id="rerollButton" class="reroll-button" aria-label="Reroll images">
+        ⟳ Reroll
+      </button>
+    </header>
+
+    <main>
+      <!-- Two-random-image choice view -->
+      <section id="choiceView" class="choice-view">
+        <div class="choice-instructions">
+          Tap one of the images below to make it fill the screen.
         </div>
-        <button id="closePanel" aria-label="Close menu">✕</button>
-      </header>
-
-      <main id="panelBody">
-        <section id="randomArea">
-          <p class="sectionTitle">Feeling lucky?</p>
-          <div id="randomChoices">
-            <div class="choiceCard" data-index="">
-              <img id="choice1" src="" alt="Random option 1" />
-              <span class="choiceLabel">Option A</span>
-            </div>
-            <div class="choiceCard" data-index="">
-              <img id="choice2" src="" alt="Random option 2" />
-              <span class="choiceLabel">Option B</span>
-            </div>
-          </div>
-          <button id="rerollBtn" type="button">
-            <span>⟳</span> Reroll two random images
+        <div class="choice-images">
+          <button class="choice-card" data-choice="0">
+            <img alt="Random choice 1" />
           </button>
-          <p class="hint">
-            Tip: after you pick one, close the menu to enjoy it full-screen. You
-            can always open this menu again with the ☰ button.
-          </p>
-        </section>
+          <button class="choice-card" data-choice="1">
+            <img alt="Random choice 2" />
+          </button>
+        </div>
+      </section>
 
-        <section style="margin-top: 0.75rem;">
-          <p class="sectionTitle">Browse everything</p>
-          <div id="thumbGrid"></div>
-        </section>
-      </main>
+      <!-- Single selected image view -->
+      <section id="singleView" class="single-view hidden">
+        <img id="selectedImage" alt="Selected" />
+      </section>
+    </main>
+
+    <!-- Slide-out menu with full gallery -->
+    <aside id="sideMenu" class="side-menu" aria-hidden="true">
+      <div class="side-menu-header">
+        <div class="side-menu-title">All Images</div>
+        <button id="closeMenuButton" class="close-menu-button" aria-label="Close menu">
+          ✕
+        </button>
+      </div>
+      <div id="gallery" class="gallery">
+        <!-- Thumbnails get injected here -->
+      </div>
     </aside>
+
+    <div id="backdrop" class="backdrop"></div>
   </div>
 
   <script>
@@ -470,10 +420,7 @@
       "https://mtg.design/i/gpib57.jpg?20250823012928",
       "https://mtg.design/i/ectu37.jpg?20250823012629",
       "https://mtg.design/i/yxct86.jpg?20250823012448",
-      "https://mtg/design/i/vzls41.jpg?20250823011531".replace(
-        "https://mtg/design",
-        "https://mtg.design"
-      ),
+      "https://mtg.design/i/vzls41.jpg?20250823011531",
       "https://mtg.design/i/qoeq82.jpg?20250823011253",
       "https://mtg.design/i/mwjh34.jpg?20250823011046",
       "https://mtg.design/i/imny29.jpg?20250823010835",
@@ -714,139 +661,142 @@
       "https://mtg.design/i/etgt45.jpg?20220921012403"
     ];
 
-    const fullImage = document.getElementById("fullImage");
-    const sidePanel = document.getElementById("sidePanel");
-    const menuToggle = document.getElementById("menuToggle");
-    const closePanel = document.getElementById("closePanel");
-    const rerollBtn = document.getElementById("rerollBtn");
-    const randomChoicesContainer = document.getElementById("randomChoices");
-    const choiceCards = randomChoicesContainer.querySelectorAll(".choiceCard");
-    const choice1 = document.getElementById("choice1");
-    const choice2 = document.getElementById("choice2");
-    const thumbGrid = document.getElementById("thumbGrid");
+    let currentRandomIndices = [null, null];
 
-    let selectedIndex = 0;
+    const choiceView = document.getElementById("choiceView");
+    const singleView = document.getElementById("singleView");
+    const selectedImageEl = document.getElementById("selectedImage");
+    const choiceButtons = Array.from(
+      document.querySelectorAll(".choice-card")
+    );
+    const menuToggleButton = document.getElementById("menuToggle");
+    const rerollButton = document.getElementById("rerollButton");
+    const sideMenu = document.getElementById("sideMenu");
+    const closeMenuButton = document.getElementById("closeMenuButton");
+    const backdrop = document.getElementById("backdrop");
+    const galleryEl = document.getElementById("gallery");
 
-    function openPanel() {
-      sidePanel.classList.add("open");
-      sidePanel.setAttribute("aria-hidden", "false");
-      menuToggle.setAttribute("aria-expanded", "true");
-    }
+    function getTwoRandomIndices() {
+      if (imageUrls.length === 0) return [null, null];
+      if (imageUrls.length === 1) return [0, 0];
 
-    function closePanelView() {
-      sidePanel.classList.remove("open");
-      sidePanel.setAttribute("aria-hidden", "true");
-      menuToggle.setAttribute("aria-expanded", "false");
-    }
-
-    function setSelectedImage(index) {
-      selectedIndex = index;
-      const url = imageUrls[index];
-      fullImage.style.opacity = "0";
-      const img = new Image();
-      img.onload = () => {
-        fullImage.src = url;
-        fullImage.style.opacity = "1";
-      };
-      img.src = url;
-
-      // highlight selected thumbnail
-      thumbGrid.querySelectorAll(".thumb").forEach((el) => {
-        el.classList.toggle(
-          "selected",
-          Number(el.dataset.index) === Number(index)
-        );
-      });
-    }
-
-    function randomPair() {
-      if (imageUrls.length < 2) return [0, 0];
-      const first = Math.floor(Math.random() * imageUrls.length);
-      let second = Math.floor(Math.random() * imageUrls.length);
-      if (second === first) {
-        second = (second + 1) % imageUrls.length;
-      }
+      let first = Math.floor(Math.random() * imageUrls.length);
+      let second;
+      do {
+        second = Math.floor(Math.random() * imageUrls.length);
+      } while (second === first);
       return [first, second];
     }
 
-    function rerollRandomChoices() {
-      const [idx1, idx2] = randomPair();
-      choice1.src = imageUrls[idx1];
-      choice2.src = imageUrls[idx2];
-      choiceCards[0].dataset.index = idx1;
-      choiceCards[1].dataset.index = idx2;
+    function showRandomChoices() {
+      currentRandomIndices = getTwoRandomIndices();
+      const [i0, i1] = currentRandomIndices;
+
+      choiceButtons[0]
+        .querySelector("img")
+        .setAttribute("src", imageUrls[i0]);
+      choiceButtons[1]
+        .querySelector("img")
+        .setAttribute("src", imageUrls[i1]);
+
+      // Go back to choice view
+      singleView.classList.add("hidden");
+      choiceView.classList.remove("hidden");
     }
 
-    function buildThumbnails() {
-      const fragment = document.createDocumentFragment();
+    function selectImageByIndex(index) {
+      if (index == null || !imageUrls[index]) return;
+      const url = imageUrls[index];
+      selectImage(url);
+    }
+
+    function selectImage(url) {
+      selectedImageEl.setAttribute("src", url);
+      choiceView.classList.add("hidden");
+      singleView.classList.remove("hidden");
+      // Keep header visible; everything else is essentially this one image.
+    }
+
+    function openMenu() {
+      sideMenu.classList.add("open");
+      sideMenu.setAttribute("aria-hidden", "false");
+      backdrop.classList.add("visible");
+    }
+
+    function closeMenu() {
+      sideMenu.classList.remove("open");
+      sideMenu.setAttribute("aria-hidden", "true");
+      backdrop.classList.remove("visible");
+    }
+
+    function toggleMenu() {
+      const isOpen = sideMenu.classList.contains("open");
+      if (isOpen) {
+        closeMenu();
+      } else {
+        openMenu();
+      }
+    }
+
+    function buildGallery() {
+      galleryEl.innerHTML = "";
       imageUrls.forEach((url, index) => {
-        const wrap = document.createElement("div");
-        wrap.className = "thumb";
-        wrap.dataset.index = index;
+        const btn = document.createElement("button");
+        btn.className = "gallery-item";
+        btn.type = "button";
+        btn.setAttribute("aria-label", "Select image " + (index + 1));
 
         const img = document.createElement("img");
         img.src = url;
-        img.loading = "lazy";
         img.alt = "Image " + (index + 1);
 
-        const badge = document.createElement("span");
-        badge.className = "thumbIndex";
-        badge.textContent = "#" + (index + 1);
+        btn.appendChild(img);
 
-        wrap.appendChild(img);
-        wrap.appendChild(badge);
-        fragment.appendChild(wrap);
+        btn.addEventListener("click", () => {
+          selectImage(url);
+          closeMenu();
+        });
+
+        galleryEl.appendChild(btn);
       });
-      thumbGrid.appendChild(fragment);
     }
 
-    // Event wiring
-    menuToggle.addEventListener("click", () => {
-      if (sidePanel.classList.contains("open")) {
-        closePanelView();
-      } else {
-        openPanel();
-      }
-    });
+    function initEvents() {
+      // Choice buttons (two random options)
+      choiceButtons.forEach((btn, which) => {
+        btn.addEventListener("click", () => {
+          const index = currentRandomIndices[which];
+          selectImageByIndex(index);
+        });
+      });
 
-    closePanel.addEventListener("click", () => {
-      closePanelView();
-    });
+      // Reroll button
+      rerollButton.addEventListener("click", () => {
+        showRandomChoices();
+        // If user had menu open, keep focus on main content again
+        closeMenu();
+      });
 
-    rerollBtn.addEventListener("click", () => {
-      rerollRandomChoices();
-    });
+      // Menu controls
+      menuToggleButton.addEventListener("click", toggleMenu);
+      closeMenuButton.addEventListener("click", closeMenu);
+      backdrop.addEventListener("click", closeMenu);
 
-    // Click on random choice
-    choiceCards.forEach((card) => {
-      card.addEventListener("click", () => {
-        const idx = Number(card.dataset.index);
-        if (!Number.isNaN(idx)) {
-          setSelectedImage(idx);
-          // close panel to reveal full-screen image
-          closePanelView();
+      // Small ESC key usability
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closeMenu();
         }
       });
-    });
+    }
 
-    // Click on any thumbnail (event delegation)
-    thumbGrid.addEventListener("click", (e) => {
-      const thumb = e.target.closest(".thumb");
-      if (!thumb) return;
-      const idx = Number(thumb.dataset.index);
-      if (!Number.isNaN(idx)) {
-        setSelectedImage(idx);
-      }
-    });
+    function init() {
+      buildGallery();
+      initEvents();
+      showRandomChoices();
+    }
 
-    // Initial setup
-    buildThumbnails();
-    rerollRandomChoices();
-    // Set initial selected image to the first random option
-    const initialIndex = Number(choiceCards[0].dataset.index) || 0;
-    setSelectedImage(initialIndex);
-    // Start with menu open so the user sees the options right away
-    openPanel();
+    window.addEventListener("DOMContentLoaded", init);
   </script>
 </body>
 </html>
